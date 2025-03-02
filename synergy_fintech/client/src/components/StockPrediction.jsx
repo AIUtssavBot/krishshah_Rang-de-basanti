@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
+import StockChart from './StockChart';
 
 const Card = ({ children, className = "" }) => (
   <div className={`rounded-lg border border-gray-700 bg-gray-900 text-white shadow-md ${className}`}>
@@ -54,6 +55,7 @@ const StockPrediction = () => {
     const [chartType, setChartType] = useState('candle');
     const [showBollingerBands, setShowBollingerBands] = useState(true);
     const [showEMA200, setShowEMA200] = useState(true);
+    const [recommendation, setRecommendation] = useState(null);
 
     const isIndianStock = (symbol) => symbol.toLowerCase().endsWith('.ns');
     const getCurrencySymbol = (symbol) => isIndianStock(symbol) ? '₹' : '$';
@@ -67,6 +69,7 @@ const StockPrediction = () => {
         setLoading(true);
         setError('');
         try {
+            // Fetch visualization data
             const response = await fetch(`http://localhost:5000/api/stock/${stockSymbol}/visualization`);
             const data = await response.json();
 
@@ -98,6 +101,19 @@ const StockPrediction = () => {
             };
 
             setStockData(cleanData);
+
+            // If the symbol is AAPL, also fetch recommendation data
+            if (stockSymbol.toUpperCase() === 'AAPL') {
+                const recResponse = await fetch(`http://localhost:5000/api/recommendation/AAPL`);
+                const recData = await recResponse.json();
+                
+                if (!recData.error) {
+                    setRecommendation(recData.report);
+                }
+            } else {
+                setRecommendation(null);
+            }
+
         } catch (err) {
             setError(err.message || 'Failed to fetch stock data');
         } finally {
@@ -210,6 +226,13 @@ const StockPrediction = () => {
         return baseData;
     };
 
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (stockSymbol.trim()) {
+            fetchStockData();
+        }
+    };
+
     return (
         <div className="container mx-auto p-4 space-y-6 bg-gray-900 min-h-screen">
             <Card>
@@ -225,7 +248,7 @@ const StockPrediction = () => {
                             className="max-w-xs"
                         />
                         <Button 
-                            onClick={fetchStockData}
+                            onClick={handleSubmit}
                             disabled={loading}
                         >
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -478,6 +501,140 @@ const StockPrediction = () => {
                             </div>
                         </div>
                     )}
+
+                    {recommendation && (
+                        <div className="space-y-6">
+                            {/* Main Recommendation */}
+                            <div className="p-6 bg-blue-900/20 border border-blue-700 rounded-lg">
+                                <h3 className="text-xl font-semibold mb-3 text-blue-300">Recommendation</h3>
+                                <p className="text-gray-200">{recommendation.recommendation}</p>
+                            </div>
+
+                            {/* Market Sentiment Chart - Updated with NASDAQ Data */}
+                            <div className="p-6 bg-gray-800/50 border border-gray-700 rounded-lg">
+                                <h3 className="text-xl font-semibold mb-6">NASDAQ Market Sentiment 2024</h3>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    {/* Analyst Predictions */}
+                                    <div className="space-y-4">
+                                        <h4 className="text-lg font-medium text-gray-300">Major Bank Forecasts</h4>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-green-400">Bullish</span>
+                                                <div className="flex-1 mx-4">
+                                                    <div className="h-4 bg-gray-700 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-green-500" style={{ width: '65%' }} />
+                                                    </div>
+                                                </div>
+                                                <span>65%</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-yellow-400">Neutral</span>
+                                                <div className="flex-1 mx-4">
+                                                    <div className="h-4 bg-gray-700 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-yellow-500" style={{ width: '25%' }} />
+                                                    </div>
+                                                </div>
+                                                <span>25%</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-red-400">Bearish</span>
+                                                <div className="flex-1 mx-4">
+                                                    <div className="h-4 bg-gray-700 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-red-500" style={{ width: '10%' }} />
+                                                    </div>
+                                                </div>
+                                                <span>10%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Price Targets */}
+                                    <div className="space-y-4">
+                                        <h4 className="text-lg font-medium text-gray-300">2024 Price Targets</h4>
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-gray-400">High Target</span>
+                                                <span className="text-green-400">18,500</span>
+                                            </div>
+                                            <div className="relative h-2 bg-gray-700 rounded-full">
+                                                <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full" style={{ width: '100%' }} />
+                                                <div className="absolute w-2 h-4 bg-white rounded-full -top-1" style={{ left: '60%' }} />
+                                            </div>
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-gray-400">Low Target</span>
+                                                <span className="text-red-400">14,000</span>
+                                            </div>
+                                            <div className="mt-4 p-4 bg-gray-800/50 rounded-lg">
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <div className="text-sm text-gray-400">Support Level</div>
+                                                        <div className="text-lg font-semibold text-blue-400">17,000</div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="text-sm text-gray-400">Expected Growth</div>
+                                                        <div className="text-lg font-semibold text-green-400">+10-19%</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* Key Insights */}
+                                <div className="mt-6 p-4 bg-blue-900/20 border border-blue-700 rounded-lg">
+                                    <h4 className="text-lg font-medium text-blue-300 mb-3">Key Market Insights</h4>
+                                    <ul className="space-y-2 text-gray-300">
+                                        <li>• Major banks including Bank of America and Deutsche Bank maintain bullish outlook</li>
+                                        <li>• 17,000 identified as key support level for continued bull market</li>
+                                        <li>• Tech sector showing resilience despite recent corrections</li>
+                                        <li>• AI remains a significant growth driver for 2024</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            {/* Financial Indicators */}
+                            <div className="p-6 bg-gray-800/50 border border-gray-700 rounded-lg">
+                                <h3 className="text-xl font-semibold mb-3">Key Financial Indicators</h3>
+                                <div className="prose prose-invert max-w-none">
+                                    {recommendation.financial_indicators.split('\n').map((line, index) => (
+                                        <p key={index} className="mb-2">{line}</p>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* News Insights */}
+                            <div className="p-6 bg-gray-800/50 border border-gray-700 rounded-lg">
+                                <h3 className="text-xl font-semibold mb-3">News Insights</h3>
+                                <div className="prose prose-invert max-w-none">
+                                    {recommendation.news_insights.split('\n').map((line, index) => (
+                                        <p key={index} className="mb-2">{line}</p>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Comparative Analysis */}
+                            <div className="p-6 bg-gray-800/50 border border-gray-700 rounded-lg">
+                                <h3 className="text-xl font-semibold mb-3">Comparative Analysis</h3>
+                                <div className="prose prose-invert max-w-none">
+                                    {recommendation.comparative_analysis.split('\n').map((line, index) => (
+                                        <p key={index} className="mb-2">{line}</p>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Conclusion */}
+                            <div className="p-6 bg-green-900/20 border border-green-700 rounded-lg">
+                                <h3 className="text-xl font-semibold mb-3 text-green-300">Conclusion</h3>
+                                <div className="prose prose-invert max-w-none">
+                                    {recommendation.conclusion.split('\n').map((line, index) => (
+                                        <p key={index} className="mb-2">{line}</p>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {stockSymbol && <StockChart symbol={stockSymbol} />}
                 </CardContent>
             </Card>
         </div>

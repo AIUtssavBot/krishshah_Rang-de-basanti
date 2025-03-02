@@ -676,5 +676,65 @@ def search_news(query):
         logger.error(error_msg)
         return jsonify({"error": error_msg}), 500
 
+@app.route('/api/recommendation/<symbol>', methods=['GET'])
+def get_recommendation(symbol):
+    try:
+        logger.info(f"Fetching recommendation for {symbol}")
+        
+        # For now, we'll only support AAPL
+        if symbol.upper() != 'AAPL':
+            return jsonify({
+                "error": "Recommendations currently only available for AAPL"
+            }), 404
+            
+        # Read the recommendation report
+        with open('recommendation_report.md', 'r') as file:
+            report_content = file.read()
+            
+        # Parse the report into sections
+        sections = {
+            "recommendation": "",
+            "financial_indicators": "",
+            "news_insights": "",
+            "comparative_analysis": "",
+            "conclusion": ""
+        }
+        
+        current_section = None
+        current_content = []
+        
+        for line in report_content.split('\n'):
+            if line.startswith('Based on'):
+                sections["recommendation"] = line
+            elif line.startswith('### Key Financial Indicators'):
+                current_section = "financial_indicators"
+                current_content = []
+            elif line.startswith('### Insights and Sentiment'):
+                sections["financial_indicators"] = '\n'.join(current_content)
+                current_section = "news_insights"
+                current_content = []
+            elif line.startswith('### Comparative Analysis'):
+                sections["news_insights"] = '\n'.join(current_content)
+                current_section = "comparative_analysis"
+                current_content = []
+            elif line.startswith('### Conclusion'):
+                sections["comparative_analysis"] = '\n'.join(current_content)
+                current_section = "conclusion"
+                current_content = []
+            elif line.strip() and current_section:
+                current_content.append(line)
+                
+        if current_section:
+            sections[current_section] = '\n'.join(current_content)
+            
+        return jsonify({
+            "symbol": symbol.upper(),
+            "report": sections
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching recommendation: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000) 
