@@ -1,62 +1,113 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
+from langchain_groq import ChatGroq
+import os
+from langchain_openai import ChatOpenAI
 
-# If you want to run a snippet of code before or after the crew starts, 
-# you can use the @before_kickoff and @after_kickoff decorators
-# https://docs.crewai.com/concepts/crews#example-crew-class-with-decorators
+
+
+# Tool imports
+from tools.newstool import StockNewsScraperTool
+from tools.stockprice import FinancialDataFetcherTool
+from tools.mpt import PortfolioOptimizationTool
+from tools.searchtool import SearchTool
 
 @CrewBase
 class Synergy():
-	"""Synergy crew"""
+    """Synergy crew for stock analysis"""
+    agents_config = 'config/agents.yaml'
+    tasks_config = 'config/tasks.yaml'
 
-	# Learn more about YAML configuration files here:
-	# Agents: https://docs.crewai.com/concepts/agents#yaml-configuration-recommended
-	# Tasks: https://docs.crewai.com/concepts/tasks#yaml-configuration-recommended
-	agents_config = 'config/agents.yaml'
-	tasks_config = 'config/tasks.yaml'
+    def __init__(self):
+        # Initialize tools
+        self.news_tool = StockNewsScraperTool()
+        self.financial_tool = FinancialDataFetcherTool()
+        self.portfolio_tool = PortfolioOptimizationTool()
+        self.search_tool = SearchTool()
 
-	# If you would like to add tools to your agents, you can learn more about it here:
-	# https://docs.crewai.com/concepts/agents#agent-tools
-	@agent
-	def researcher(self) -> Agent:
-		return Agent(
-			config=self.agents_config['researcher'],
-			verbose=True
-		)
+        # Configure Groq LLM
+        # self.groq_llm = ChatGroq(
+        #     temperature=0,
+        #     model_name="groq/mixtral-8x7b-32768",
+        #     groq_api_key=os.getenv("GROQ_API_KEY"),
+        #     max_tokens=4000
+        # )
+        self.groq_llm = ChatOpenAI(
+            temperature=0,
+            model="gpt-4-turbo",  # Use 'gpt-3.5-turbo' for lower cost
+            openai_api_key=os.getenv("OPENAI_API_KEY"),
+            max_tokens=4000
+        )
 
-	@agent
-	def reporting_analyst(self) -> Agent:
-		return Agent(
-			config=self.agents_config['reporting_analyst'],
-			verbose=True
-		)
+    # ------------------ Agents ------------------
+    @agent
+    def data_extraction_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config['data_extraction_agent'],
+            llm=self.groq_llm,
+            tools=[self.news_tool, self.financial_tool, self.search_tool],
+            verbose=True,
+            allow_delegation=False,
+            max_iter=5,max_rpm=29
+        )
 
-	# To learn more about structured task outputs, 
-	# task dependencies, and task callbacks, check out the documentation:
-	# https://docs.crewai.com/concepts/tasks#overview-of-a-task
-	@task
-	def research_task(self) -> Task:
-		return Task(
-			config=self.tasks_config['research_task'],
-		)
+    @agent
+    def stock_recommendation_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config['stock_recommendation_agent'],
+            llm=self.groq_llm,
+            tools=[self.search_tool],
+            verbose=True,
+            allow_delegation=False,
+            max_iter=3,max_rpm=29
+        )
 
-	@task
-	def reporting_task(self) -> Task:
-		return Task(
-			config=self.tasks_config['reporting_task'],
-			output_file='report.md'
-		)
+    @agent
+    def investment_strategy_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config['investment_strategy_agent'],
+            llm=self.groq_llm,
+            tools=[self.portfolio_tool],
+            verbose=True,
+            allow_delegation=True,
+            max_iter=5,max_rpm=29
+        )
 
-	@crew
-	def crew(self) -> Crew:
-		"""Creates the Synergy crew"""
-		# To learn how to add knowledge sources to your crew, check out the documentation:
-		# https://docs.crewai.com/concepts/knowledge#what-is-knowledge
+    # ------------------ Tasks ------------------
+    @task
+    def data_extraction_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['data_extraction_task'],
+            agent=self.data_extraction_agent(),
+            output_file="extracted_data.md"
+        )
 
-		return Crew(
-			agents=self.agents, # Automatically created by the @agent decorator
-			tasks=self.tasks, # Automatically created by the @task decorator
-			process=Process.sequential,
-			verbose=True,
-			# process=Process.hierarchical, # In case you wanna use that instead https://docs.crewai.com/how-to/Hierarchical/
-		)
+    @task
+    def stock_recommendation_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['stock_recommendation_task'],
+            agent=self.stock_recommendation_agent(),
+            context=[self.data_extraction_task()],
+            output_file="recommendation_report.md"
+        )
+
+    @task
+    def investment_strategy_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['investment_strategy_task'],
+            agent=self.investment_strategy_agent(),
+            context=[self.stock_recommendation_task()],
+            output_file="investment_strategy.md"
+        )
+
+    @crew
+    def crew(self) -> Crew:
+        """Assemble the crew"""
+        return Crew(
+            agents=self.agents,
+            tasks=self.tasks,
+            process=Process.sequential,
+            manager_llm=self.groq_llm,  # Critical Groq integration
+            verbose=True,
+            memory=True
+        )

@@ -147,12 +147,4 @@ class FinancialDataFetcherTool(BaseTool):
             "last_5_days_prices": last_5_days_prices
         }
 
-# Main block for testing the tool
-if __name__ == "__main__":
-    company_input = input("Enter company name (e.g., Tesla, Microsoft, Apple): ").strip()
-    tool = FinancialDataFetcherTool()
-    result = tool._run(company_input)
-    
-    print("\nFetched Data:")
-    from pprint import pprint
-    pprint(result)
+#

@@ -83,18 +83,4 @@ class StockNewsScraperTool(BaseTool):
         return {"stock_news": filtered_articles}
 
 # Main block to test the tool
-if __name__ == "__main__":
-    stock_input = input("Enter the stock name or symbol (e.g., 'Tata Motors'): ").strip()
-    news_tool = StockNewsScraperTool()
-    result = news_tool._run(stock_input)
-    
-    print("\nFetched News Articles:")
-    for article in result.get("stock_news", []):
-        print(f"Title: {article.get('title')}")
-        print(f"Link: {article.get('link')}")
-        print(f"Description: {article.get('description')}")
-        print(f"Publication Date: {article.get('pubDate')}")
-        print(f"Source: {article.get('source')}\n")
-    
-    if "error" in result:
-        print("Error:", result["error"])
+
