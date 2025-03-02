@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { BarChart3, MessageSquare, Home, List, LogOut, Bell, Search, User } from 'lucide-react';
 
-const Navbar: React.FC = () => {
+const Navbar = ({ isCollapsed }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -13,7 +13,7 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className={`bg-gray-800 border-b border-gray-700 ${isAuthenticated ? 'ml-20 md:ml-64' : ''} transition-all duration-300`}>
+    <nav className={`bg-gray-800 border-b border-gray-700 ${isAuthenticated ? (isCollapsed ? 'ml-20' : 'ml-64') : ''} transition-all duration-300`}>
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           {!isAuthenticated && (
@@ -94,4 +94,4 @@ const Navbar: React.FC = () => {
   );
 };
 
-export default Navbar;
+export default Navbar; 

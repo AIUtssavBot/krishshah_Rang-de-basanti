@@ -1,8 +1,20 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { BarChart3, TrendingUp, LineChart, BrainCircuit } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const HomePage = () => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    } else {
+      navigate('/login');
+    }
+  };
+
   return (
     <div className="space-y-16">
       {/* Hero Section */}
@@ -15,12 +27,12 @@ const HomePage = () => {
             Harness the power of artificial intelligence to analyze markets, predict trends, and make data-driven investment decisions.
           </p>
           <div className="flex justify-center space-x-4">
-            <Link 
-              to="/login" 
+            <button 
+              onClick={handleGetStarted}
               className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium text-lg transition-colors"
             >
-              Get Started
-            </Link>
+              {isAuthenticated ? 'Go to Dashboard' : 'Get Started'}
+            </button>
             <a 
               href="#features" 
               className="bg-transparent border border-blue-500 text-blue-400 hover:bg-blue-500/10 px-6 py-3 rounded-lg font-medium text-lg transition-colors"
@@ -71,20 +83,6 @@ const HomePage = () => {
             </p>
           </div>
         </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-2xl p-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">Ready to transform your investment strategy?</h2>
-        <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
-          Join thousands of investors who are leveraging AI to make smarter, data-driven decisions in the equity market.
-        </p>
-        <Link 
-          to="/login" 
-          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-        >
-          Sign Up Now
-        </Link>
       </section>
     </div>
   );

@@ -3,13 +3,13 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import ChatbotPage from './pages/ChatbotPage';
-import WatchlistPage from './pages/WatchlistPage';
 import DashboardPage from './pages/DashboardPage';
 import PredictionsPage from './pages/PredictionsPage';
 import NewsPage from './pages/NewsPage';
 import DocumentsPage from './pages/DocumentsPage';
 import Layout from './components/Layout';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import StockPrediction from './components/StockPrediction';
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
@@ -22,13 +22,24 @@ const ProtectedRoute = ({ children }) => {
   return <>{children}</>;
 };
 
+// Home route component that redirects to dashboard if authenticated
+const HomeRoute = () => {
+  const { isAuthenticated } = useAuth();
+  
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return <HomePage />;
+};
+
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Layout>
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<HomeRoute />} />
             <Route path="/login" element={<LoginPage />} />
             <Route 
               path="/dashboard" 
@@ -55,14 +66,6 @@ function App() {
               } 
             />
             <Route 
-              path="/watchlist" 
-              element={
-                <ProtectedRoute>
-                  <WatchlistPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
               path="/news" 
               element={
                 <ProtectedRoute>
@@ -75,6 +78,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DocumentsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/stock-prediction" 
+              element={
+                <ProtectedRoute>
+                  <StockPrediction />
                 </ProtectedRoute>
               } 
             />

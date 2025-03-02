@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   BarChart3, 
@@ -9,12 +9,12 @@ import {
   FileText, 
   Newspaper,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  LineChart
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const Sidebar: React.FC = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
 
@@ -25,14 +25,13 @@ const Sidebar: React.FC = () => {
   const navItems = [
     { path: '/', icon: <Home size={20} />, label: 'Home' },
     { path: '/dashboard', icon: <BarChart3 size={20} />, label: 'Dashboard' },
-    { path: '/predictions', icon: <TrendingUp size={20} />, label: 'Stock Predictions' },
+    { path: '/stock-prediction', icon: <LineChart size={20} />, label: 'Stock Analysis' },
     { path: '/chatbot', icon: <MessageSquare size={20} />, label: 'AI Assistant' },
-    { path: '/watchlist', icon: <List size={20} />, label: 'Watchlist' },
     { path: '/news', icon: <Newspaper size={20} />, label: 'Financial News' },
     { path: '/documents', icon: <FileText size={20} />, label: 'Document Analysis' },
   ];
 
-  const isActive = (path: string) => {
+  const isActive = (path) => {
     return location.pathname === path;
   };
 
@@ -82,4 +81,4 @@ const Sidebar: React.FC = () => {
   );
 };
 
-export default Sidebar;
+export default Sidebar; 
