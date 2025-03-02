@@ -36,13 +36,16 @@ else:
     logger.warning("No valid Finnhub API key found, will use Yahoo Finance as fallback")
     finnhub_client = None
 
+# Get NewsData.io API key from environment
+news_api_key = os.getenv('NEWS_API_KEY')
+if not news_api_key:
+    logger.error("No NewsData.io API key found in environment variables")
+    news_api_key = 'pub_725842aabc8390c651c3a579f690a72d2d6ef'  # Fallback to default key
+
 # Create data directory if it doesn't exist
 data_dir = Path('data')
 data_dir.mkdir(exist_ok=True)
 watchlist_file = data_dir / 'watchlist.json'
-
-# API Keys
-NEWS_API_KEY = 'pub_725842aabc8390c651c3a579f690a72d2d6ef'
 
 def load_watchlist():
     """Load watchlist from file"""
@@ -531,7 +534,7 @@ def get_news():
             search_terms.extend(category_terms[category])
         
         params = {
-            'apikey': NEWS_API_KEY,
+            'apikey': news_api_key,  # Use the environment variable
             'category': 'business',
             'language': 'en',
             'q': ' OR '.join(search_terms),
@@ -608,9 +611,9 @@ def search_news(query):
         url = "https://newsdata.io/api/1/news"
         
         params = {
-            'apikey': NEWS_API_KEY,
-            'q': query,                # Search query
-            'language': 'en',          # English news only
+            'apikey': news_api_key,  # Use the environment variable
+            'q': query,
+            'language': 'en',
         }
         
         response = requests.get(url, params=params)

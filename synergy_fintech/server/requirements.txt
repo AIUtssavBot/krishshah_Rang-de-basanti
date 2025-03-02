@@ -1,8 +1,22 @@
-flask==3.0.0
+# Web Framework
+Flask==3.0.0
 flask-cors==4.0.0
-requests==2.31.0
+
+# Data Processing
 pandas==2.1.4
 numpy==1.26.2
+yfinance==0.2.33
+
+# API Clients
+finnhub-python==2.4.19
+requests==2.31.0
+
+# Environment and Utils
 python-dotenv==1.0.0
-finnhub-python==2.4.18
-yfinance==0.2.36 
+pathlib==1.0.1
+
+# Date and Time
+python-dateutil==2.8.2
+
+# Logging
+logging==0.4.9.6 
